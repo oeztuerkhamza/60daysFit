@@ -1,0 +1,104 @@
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.day-nav__spacer { flex: 1; }
+
+.day-head { margin-bottom: var(--space); }
+.day-head h1 { margin: 0.55rem 0 0.35rem; }
+
+.day-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.badge--done { border-color: var(--ok); color: var(--ok); }
+
+.day-head__bar {
+  height: 7px;
+  margin-top: 0.85rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.day-head__bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.small { font-size: 0.82rem; margin: 0.45rem 0 0; }
+
+/* ---------- exercise list ---------- */
+.exercises { margin: 0.6rem 0 0; padding: 0; list-style: none; }
+
+.exercise {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.exercise:first-child { border-top: 0; padding-top: 0.35rem; }
+.exercise.is-done .exercise__name { text-decoration: line-through; color: var(--text-muted); }
+
+.exercise__main { display: flex; gap: 0.75rem; flex: 1 1 260px; }
+
+.exercise__check input {
+  width: 22px;
+  height: 22px;
+  margin: 0.15rem 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.exercise__info { min-width: 0; }
+.exercise__name { margin: 0; font-weight: 650; }
+.exercise__spec { margin: 0.1rem 0 0; font-size: 0.82rem; }
+
+.exercise__how { margin-top: 0.35rem; font-size: 0.82rem; }
+.exercise__how summary { cursor: pointer; color: var(--text-muted); font-weight: 600; }
+.exercise__how p { margin: 0.35rem 0 0; }
+
+.exercise__inputs { display: flex; gap: 0.5rem; }
+
+.mini-field { width: 74px; }
+.mini-field label { margin-bottom: 0.15rem; font-size: 0.68rem; }
+.mini-field input { padding: 0.4rem 0.45rem; text-align: center; }
+
+/* ---------- check-in ---------- */
+.energy { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.energy__btn {
+  display: grid;
+  gap: 0.1rem;
+  flex: 1 1 78px;
+  padding: 0.45rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.energy__btn.is-active { border-color: var(--accent); color: var(--accent); }
+.energy__label { font-size: 0.66rem; font-weight: 600; color: var(--text-muted); }
+.energy__btn.is-active .energy__label { color: var(--accent); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}

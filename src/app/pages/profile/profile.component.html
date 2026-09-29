@@ -1,0 +1,57 @@
+<header class="page-head">
+  <h1>Profil</h1>
+  <p class="muted">{{ auth.user()?.email }}</p>
+</header>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+@if (notice()) {
+  <p class="alert alert--ok" role="status">{{ notice() }}</p>
+}
+
+<section class="card" [formGroup]="form">
+  <h2>Challenge ayarları</h2>
+
+  <div class="field">
+    <label for="display_name">Adın</label>
+    <input id="display_name" type="text" formControlName="display_name" autocomplete="name" required />
+  </div>
+
+  <div class="field">
+    <label for="start_date">Başlangıç tarihi</label>
+    <input id="start_date" type="date" formControlName="start_date" required />
+    <p class="field__hint">Bu tarih programın 1. günü. Şu an {{ currentDay() }}. gündesin.</p>
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label for="height_cm">Boy (cm)</label>
+      <input id="height_cm" type="number" inputmode="decimal" step="0.5" min="80" max="250" formControlName="height_cm" />
+    </div>
+
+    <div class="field">
+      <label for="goal">Hedef</label>
+      <select id="goal" formControlName="goal">
+        @for (option of goals; track option[0]) {
+          <option [value]="option[0]">{{ option[1] }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="weekly_target">Haftalık antrenman hedefi</label>
+      <input id="weekly_target" type="number" inputmode="numeric" min="1" max="7" formControlName="weekly_target" />
+    </div>
+  </div>
+
+  <button class="btn btn--primary" type="button" [disabled]="saving()" (click)="save()">
+    {{ saving() ? 'Kaydediliyor…' : 'Kaydet' }}
+  </button>
+</section>
+
+<section class="card">
+  <h2>Hesap</h2>
+  <p class="muted">Oturumu bu cihazda kapat.</p>
+  <button class="btn btn--danger" type="button" (click)="signOut()">Çıkış yap</button>
+</section>

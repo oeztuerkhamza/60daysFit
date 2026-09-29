@@ -1,0 +1,91 @@
+.page-head { margin-bottom: 1.25rem; }
+.page-head h1 { margin-bottom: 0.15rem; }
+.page-head p { margin: 0; }
+
+.hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: var(--space);
+}
+
+.hero__ring { display: grid; justify-items: center; gap: 0.5rem; }
+.hero__ring p { margin: 0; font-size: 0.85rem; }
+
+.hero__today h2 { margin-bottom: 0.35rem; }
+.hero__today p { margin-bottom: 0.4rem; font-size: 0.9rem; }
+.hero__today .btn { margin-top: 0.6rem; }
+
+.hero__today-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.badge--done { border-color: var(--ok); color: var(--ok); }
+
+.stats { margin-bottom: var(--space); }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.section-head h2 { margin: 0; }
+.section-head a { font-size: 0.88rem; font-weight: 600; }
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.week__day {
+  display: grid;
+  gap: 0.15rem;
+  position: relative;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--focus, var(--border));
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+  min-height: 74px;
+}
+
+.week__day:hover { text-decoration: none; filter: brightness(1.12); }
+.week__day.is-today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.week__day.is-done { background: color-mix(in srgb, var(--ok) 12%, var(--surface-2)); }
+
+.week__num { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+.week__title { font-size: 0.85rem; font-weight: 600; line-height: 1.25; }
+
+.week__check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  color: var(--ok);
+  font-weight: 800;
+}
+
+code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+@media (max-width: 640px) {
+  .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .hero__today-head { justify-content: center; }
+}

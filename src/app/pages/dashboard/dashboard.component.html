@@ -1,0 +1,93 @@
+<header class="page-head">
+  <div>
+    <h1>Merhaba {{ auth.displayName() }}</h1>
+    <p class="muted">
+      {{ totalDays }} günlük programın {{ currentDay() }}. günündesin · {{ currentWeek() }}. hafta
+    </p>
+  </div>
+</header>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Yükleniyor…</p>
+} @else {
+  <section class="hero card">
+    <div class="hero__ring">
+      <app-progress-ring [percent]="stats().completionPct" [size]="128" />
+      <p class="muted center">{{ stats().completedDays }} / {{ totalDays }} gün</p>
+    </div>
+
+    <div class="hero__today">
+      @if (todayPlan(); as plan) {
+        <div class="hero__today-head">
+          <span class="badge">Gün {{ plan.day }}</span>
+          <app-focus-badge [focus]="plan.focus" />
+          @if (todayDone()) {
+            <span class="badge badge--done">Tamamlandı</span>
+          }
+        </div>
+        <h2>{{ plan.title }}</h2>
+        @if (plan.notes) {
+          <p class="muted">{{ plan.notes }}</p>
+        }
+        <p class="muted">Hedef süre: {{ plan.target_minutes }} dakika</p>
+        <a class="btn btn--primary" [routerLink]="['/gun', plan.day]">
+          {{ todayDone() ? 'Günü gözden geçir' : 'Antrenmana başla' }}
+        </a>
+      } @else {
+        <h2>Program yüklenemedi</h2>
+        <p class="muted">
+          Supabase'de <code>supabase/migrations</code> altındaki SQL dosyalarını çalıştırdığından emin ol.
+        </p>
+      }
+    </div>
+  </section>
+
+  <section class="grid stats">
+    <app-stat-card label="Güncel seri" [value]="stats().currentStreak" suffix=" gün"
+                   [caption]="'En uzun seri: ' + stats().longestStreak + ' gün'" />
+    <app-stat-card label="Tamamlanan" [value]="stats().completedDays" [suffix]="' / ' + totalDays" />
+    <app-stat-card label="Toplam süre" [value]="stats().totalMinutes" suffix=" dk"
+                   [caption]="(stats().totalMinutes / 60 | number: '1.0-1') + ' saat'" />
+    @if (latestWeight(); as weight) {
+      <app-stat-card
+        label="Güncel kilo"
+        [value]="weight | number: '1.0-1'"
+        suffix=" kg"
+        [caption]="weightDelta() ? ((weightDelta()!.change > 0 ? '+' : '') + (weightDelta()!.change | number: '1.0-1') + ' kg başlangıca göre') : 'İlk ölçüm'" />
+    } @else {
+      <app-stat-card label="Güncel kilo" value="—" caption="Ölçümler sayfasından ekle" />
+    }
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <h2>{{ currentWeek() }}. hafta</h2>
+      <a routerLink="/program">Tüm program →</a>
+    </div>
+
+    <ol class="week">
+      @for (day of weekStrip(); track day.day) {
+        <li>
+          <a
+            class="week__day"
+            [class.is-done]="day.done"
+            [class.is-today]="day.isToday"
+            [routerLink]="['/gun', day.day]"
+            [style.--focus]="'var(--focus-' + day.focus + ')'"
+            [attr.aria-current]="day.isToday ? 'date' : null"
+          >
+            <span class="week__num">{{ day.day }}</span>
+            <span class="week__title">{{ day.title }}</span>
+            @if (day.done) {
+              <span class="week__check" aria-label="tamamlandı">✓</span>
+            }
+          </a>
+        </li>
+      }
+    </ol>
+  </section>
+}

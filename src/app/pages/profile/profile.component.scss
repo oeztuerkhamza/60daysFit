@@ -1,0 +1,6 @@
+.page-head { margin-bottom: 1.25rem; }
+.page-head h1 { margin-bottom: 0.15rem; }
+.page-head p { margin: 0; }
+
+section.card + section.card { margin-top: var(--space); }
+section.card .btn { margin-top: 1.1rem; }

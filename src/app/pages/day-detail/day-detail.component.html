@@ -1,0 +1,172 @@
+<nav class="day-nav">
+  <a class="btn btn--ghost btn--sm" routerLink="/program">← Program</a>
+  <span class="day-nav__spacer"></span>
+  @if (prevDay(); as prev) {
+    <a class="btn btn--ghost btn--sm" [routerLink]="['/gun', prev]">Gün {{ prev }}</a>
+  }
+  @if (nextDay(); as next) {
+    <a class="btn btn--ghost btn--sm" [routerLink]="['/gun', next]">Gün {{ next }} →</a>
+  }
+</nav>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Yükleniyor…</p>
+} @else if (!plan()) {
+  <p class="card muted">Bu gün için program bulunamadı.</p>
+} @else {
+  <header class="card day-head">
+    <div class="day-head__meta">
+      <span class="badge">Gün {{ day() }} / {{ totalDays }}</span>
+      <app-focus-badge [focus]="plan()!.focus" />
+      <span class="badge">{{ plan()!.week }}. hafta</span>
+      @if (completed()) {
+        <span class="badge badge--done">Tamamlandı</span>
+      }
+    </div>
+
+    <h1>{{ plan()!.title }}</h1>
+    @if (plan()!.notes) {
+      <p class="muted">{{ plan()!.notes }}</p>
+    }
+
+    <div class="day-head__bar" role="img" [attr.aria-label]="'Hareket ilerlemesi ' + dayProgress() + ' yüzde'">
+      <span [style.width.%]="dayProgress()"></span>
+    </div>
+    <p class="muted small">
+      {{ doneCount() }} / {{ rows().length }} hareket · hedef {{ plan()!.target_minutes }} dk
+    </p>
+  </header>
+
+  <section class="card">
+    <h2>Hareketler</h2>
+
+    @if (rows().length === 0) {
+      <p class="muted">Bu gün için hareket tanımlanmamış.</p>
+    } @else {
+      <ul class="exercises">
+        @for (row of rows(); track row.entry.id) {
+          <li class="exercise" [class.is-done]="row.done">
+            <div class="exercise__main">
+              <label class="exercise__check">
+                <input type="checkbox" [checked]="row.done" (change)="toggleExercise(row)" />
+                <span class="sr-only">{{ row.entry.exercise.name }} tamamlandı</span>
+              </label>
+
+              <div class="exercise__info">
+                <p class="exercise__name">{{ row.entry.exercise.name }}</p>
+                <p class="exercise__spec muted">
+                  {{ row.entry.sets }} set × {{ row.entry.reps }}
+                  @if (row.entry.rest_seconds > 0) {
+                    · {{ row.entry.rest_seconds }} sn dinlenme
+                  }
+                  · {{ row.entry.exercise.equipment }}
+                </p>
+                @if (row.entry.exercise.instructions) {
+                  <details class="exercise__how">
+                    <summary>Nasıl yapılır</summary>
+                    <p class="muted">{{ row.entry.exercise.instructions }}</p>
+                  </details>
+                }
+              </div>
+            </div>
+
+            <div class="exercise__inputs">
+              <div class="mini-field">
+                <label [attr.for]="'w-' + row.entry.id">kg</label>
+                <input
+                  [id]="'w-' + row.entry.id"
+                  type="number"
+                  inputmode="decimal"
+                  step="0.5"
+                  min="0"
+                  [value]="row.weight ?? ''"
+                  (change)="onWeightChange(row, $event)"
+                />
+              </div>
+              <div class="mini-field">
+                <label [attr.for]="'r-' + row.entry.id">tekrar</label>
+                <input
+                  [id]="'r-' + row.entry.id"
+                  type="number"
+                  inputmode="numeric"
+                  step="1"
+                  min="0"
+                  [value]="row.reps ?? ''"
+                  (change)="onRepsChange(row, $event)"
+                />
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="card" [formGroup]="checkIn">
+    <h2>Gün özeti</h2>
+
+    @if (notice()) {
+      <p class="alert alert--ok" role="status">{{ notice() }}</p>
+    }
+
+    <div class="grid">
+      <div class="field">
+        <label for="duration">Süre (dk)</label>
+        <input id="duration" type="number" inputmode="numeric" min="0" max="600" formControlName="duration_minutes" />
+      </div>
+      <div class="field">
+        <label for="water">Su (ml)</label>
+        <input id="water" type="number" inputmode="numeric" min="0" step="100" formControlName="water_ml" />
+      </div>
+      <div class="field">
+        <label for="steps">Adım</label>
+        <input id="steps" type="number" inputmode="numeric" min="0" step="100" formControlName="steps" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label id="energy-label">Enerji</label>
+      <div class="energy" role="group" aria-labelledby="energy-label">
+        @for (level of energyLevels; track level) {
+          <button
+            class="energy__btn"
+            type="button"
+            [class.is-active]="checkIn.controls.energy.value === level"
+            [attr.aria-pressed]="checkIn.controls.energy.value === level"
+            (click)="setEnergy(level)"
+          >
+            {{ level }}
+            <span class="energy__label">{{ energyLabels[level] }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="notes">Not</label>
+      <textarea id="notes" formControlName="notes" placeholder="Nasıl gitti? Neyi değiştirmelisin?"></textarea>
+    </div>
+
+    <div class="actions">
+      @if (completed()) {
+        <button class="btn btn--primary" type="button" [disabled]="savingCheckIn()" (click)="saveCheckIn(true)">
+          Değişiklikleri kaydet
+        </button>
+        <button class="btn btn--ghost" type="button" [disabled]="savingCheckIn()" (click)="saveCheckIn(false)">
+          Tamamlandı işaretini kaldır
+        </button>
+      } @else {
+        <button class="btn btn--primary" type="button" [disabled]="savingCheckIn()" (click)="saveCheckIn(true)">
+          {{ savingCheckIn() ? 'Kaydediliyor…' : 'Günü tamamla' }}
+        </button>
+        <button class="btn btn--ghost" type="button" [disabled]="savingCheckIn()" (click)="saveCheckIn(false)">
+          Sadece kaydet
+        </button>
+      }
+    </div>
+  </section>
+}

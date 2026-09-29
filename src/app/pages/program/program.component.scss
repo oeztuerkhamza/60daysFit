@@ -1,0 +1,68 @@
+.page-head { margin-bottom: 1.25rem; }
+.page-head h1 { margin-bottom: 0.15rem; }
+.page-head p { margin: 0; }
+
+.week-block + .week-block { margin-top: var(--space); }
+
+.week-block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.week-block__head h2 { margin: 0; font-size: 1.05rem; }
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  gap: 0.1rem;
+  position: relative;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--focus, var(--border));
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+  min-height: 82px;
+}
+
+.day:hover { text-decoration: none; filter: brightness(1.12); }
+.day.is-today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.day.is-done { background: color-mix(in srgb, var(--ok) 12%, var(--surface-2)); }
+.day.is-rest { opacity: 0.82; }
+
+.day__num { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
+.day__title { font-size: 0.88rem; font-weight: 650; line-height: 1.25; }
+.day__focus { font-size: 0.75rem; }
+
+.day__check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  color: var(--ok);
+  font-weight: 800;
+}
+
+/* A week reads as one row once there is room for seven columns. */
+@media (min-width: 900px) {
+  .days { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+
+code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}

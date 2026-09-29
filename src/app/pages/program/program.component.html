@@ -1,0 +1,50 @@
+<header class="page-head">
+  <div>
+    <h1>60 günlük program</h1>
+    <p class="muted">{{ doneCount() }} / {{ totalDays }} gün tamamlandı</p>
+  </div>
+</header>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Yükleniyor…</p>
+} @else if (weeks().length === 0) {
+  <p class="card muted">
+    Henüz program bulunamadı. Supabase projende <code>supabase/migrations</code> altındaki SQL
+    dosyalarını çalıştırman gerekiyor.
+  </p>
+} @else {
+  @for (block of weeks(); track block.week) {
+    <section class="card week-block">
+      <div class="week-block__head">
+        <h2>{{ block.week }}. hafta</h2>
+        <span class="muted">{{ block.doneCount }} / {{ block.days.length }}</span>
+      </div>
+
+      <ol class="days">
+        @for (day of block.days; track day.day) {
+          <li>
+            <a
+              class="day"
+              [class.is-done]="day.done"
+              [class.is-today]="day.isToday"
+              [class.is-rest]="day.focus === 'rest'"
+              [routerLink]="['/gun', day.day]"
+              [style.--focus]="'var(--focus-' + day.focus + ')'"
+            >
+              <span class="day__num">{{ day.day }}</span>
+              <span class="day__title">{{ day.title }}</span>
+              <span class="day__focus muted">{{ focusLabels[day.focus] }} · {{ day.target_minutes }} dk</span>
+              @if (day.done) {
+                <span class="day__check" aria-label="tamamlandı">✓</span>
+              }
+            </a>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+}

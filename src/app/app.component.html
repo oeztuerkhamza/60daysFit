@@ -1,0 +1,43 @@
+@if (supabase.isConfigured) {
+  @if (auth.isSignedIn()) {
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" routerLink="/" (click)="closeMenu()">
+          <span class="brand__mark">60</span>
+          <span class="brand__text">dayfit</span>
+        </a>
+
+        <button
+          class="topbar__toggle"
+          type="button"
+          [attr.aria-expanded]="menuOpen()"
+          aria-controls="main-nav"
+          (click)="toggleMenu()"
+        >
+          <span class="sr-only">Menüyü aç/kapat</span>
+          <span aria-hidden="true">☰</span>
+        </button>
+
+        <nav id="main-nav" class="nav" [class.nav--open]="menuOpen()">
+          <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Panel</a>
+          <a routerLink="/program" routerLinkActive="is-active" (click)="closeMenu()">Program</a>
+          <a routerLink="/olcumler" routerLinkActive="is-active" (click)="closeMenu()">Ölçümler</a>
+          <a routerLink="/profil" routerLinkActive="is-active" (click)="closeMenu()">Profil</a>
+          <button class="btn btn--ghost btn--sm" type="button" (click)="signOut()">Çıkış</button>
+        </nav>
+      </div>
+    </header>
+  }
+
+  <main class="container page">
+    <router-outlet />
+  </main>
+
+  <footer class="container footer muted">
+    <p>60dayfit · 60 günlük antrenman takibi</p>
+  </footer>
+} @else {
+  <main class="container page">
+    <app-setup-notice />
+  </main>
+}
