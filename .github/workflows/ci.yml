@@ -88,13 +88,48 @@ jobs:
           psql -v ON_ERROR_STOP=1 -tAc "
             do \$\$
             declare
-              days int; entries int; exercises int;
+              days int; strength_rows int; walk_only int; first_km numeric; last_km numeric;
             begin
               select count(*) into days from public.program_days;
-              select count(*) into entries from public.program_day_exercises;
-              select count(*) into exercises from public.exercises;
-              if days <> 60 then raise exception 'expected 60 program days, found %', days; end if;
-              if entries < 300 then raise exception 'expected 300+ day exercises, found %', entries; end if;
-              if exercises < 30 then raise exception 'expected 30+ exercises, found %', exercises; end if;
+              select count(*) into strength_rows from public.program_day_exercises;
+              select count(*) into walk_only from public.program_days where day_type = 'walk';
+              select walk_distance_km into first_km from public.program_days where day = 1;
+              select walk_distance_km into last_km from public.program_days where day = 60;
+
+              if days <> 60 then
+                raise exception 'expected 60 program days, found %', days;
+              end if;
+              -- 46 walk+strength days x (2 phases x 2 exercises)
+              if strength_rows <> 184 then
+                raise exception 'expected 184 strength rows, found %', strength_rows;
+              end if;
+              -- Week 1 is walking only: six training days before the first rest day.
+              if walk_only <> 6 then
+                raise exception 'expected 6 walk-only days, found %', walk_only;
+              end if;
+              if first_km <> 3.0 then
+                raise exception 'expected day 1 at 3.0 km, found %', first_km;
+              end if;
+              if last_km <= first_km then
+                raise exception 'distance must grow: day 1 % vs day 60 %', first_km, last_km;
+              end if;
+            end \$\$;
+          "
+
+      - name: Check row level security is on every user table
+        run: |
+          psql -v ON_ERROR_STOP=1 -tAc "
+            do \$\$
+            declare
+              unguarded text;
+            begin
+              select string_agg(tablename, ', ') into unguarded
+              from pg_tables
+              where schemaname = 'public'
+                and tablename in ('profiles','daily_logs','set_logs','checkpoints','checkpoint_photos','meals')
+                and not rowsecurity;
+              if unguarded is not null then
+                raise exception 'row level security is off for: %', unguarded;
+              end if;
             end \$\$;
           "

@@ -6,6 +6,9 @@ import { AuthService } from '../../core/auth/auth.service';
 import { activeDay } from '../../core/data/stats';
 import { Goal, GOAL_LABELS } from '../../core/models';
 
+/** Grams of protein per kilo of body weight the program aims for. */
+const PROTEIN_PER_KG = 1.8;
+
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -31,8 +34,9 @@ export class ProfileComponent {
     display_name: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     start_date: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     height_cm: new FormControl<number | null>(null),
-    goal: new FormControl<Goal>('maintain', { nonNullable: true }),
-    weekly_target: new FormControl<number>(6, { nonNullable: true }),
+    goal: new FormControl<Goal>('lose', { nonNullable: true }),
+    protein_target_g: new FormControl<number | null>(null),
+    water_target_ml: new FormControl<number>(2500, { nonNullable: true }),
   });
 
   constructor() {
@@ -41,9 +45,17 @@ export class ProfileComponent {
       display_name: profile?.display_name ?? this.auth.displayName(),
       start_date: profile?.start_date ?? new Date().toISOString().slice(0, 10),
       height_cm: profile?.height_cm ?? null,
-      goal: profile?.goal ?? 'maintain',
-      weekly_target: profile?.weekly_target ?? 6,
+      goal: profile?.goal ?? 'lose',
+      protein_target_g: profile?.protein_target_g ?? null,
+      water_target_ml: profile?.water_target_ml ?? 2500,
     });
+  }
+
+  /** Fills the protein target from a body weight, so the user needn't do the maths. */
+  protected suggestProtein(event: Event): void {
+    const weight = Number((event.target as HTMLInputElement).value);
+    if (!Number.isFinite(weight) || weight <= 0) return;
+    this.form.controls.protein_target_g.setValue(Math.round(weight * PROTEIN_PER_KG));
   }
 
   protected async save(): Promise<void> {
@@ -64,7 +76,8 @@ export class ProfileComponent {
         start_date: values.start_date,
         height_cm: values.height_cm,
         goal: values.goal,
-        weekly_target: values.weekly_target,
+        protein_target_g: values.protein_target_g,
+        water_target_ml: values.water_target_ml,
       });
       this.notice.set('Profil güncellendi.');
     } catch (err) {

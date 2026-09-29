@@ -1,0 +1,155 @@
+<header class="page-head">
+  <h1>Beslenme</h1>
+  <p class="muted">Az şeker, az rafine karbonhidrat, bol protein. Yediğin her öğünün fotoğrafını ekle.</p>
+</header>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+@if (notice()) {
+  <p class="alert alert--ok" role="status">{{ notice() }}</p>
+}
+
+<section class="card rules">
+  <h2>Kurallar</h2>
+  <dl class="rules__list">
+    @for (rule of rules; track rule.title) {
+      <div class="rules__item">
+        <dt>{{ rule.title }}</dt>
+        <dd class="muted">{{ rule.detail }}</dd>
+      </div>
+    }
+  </dl>
+  @if (proteinTarget(); as target) {
+    <p class="rules__target">Senin günlük protein hedefin: <strong>{{ target }} g</strong></p>
+  }
+</section>
+
+<section class="card" [formGroup]="form">
+  <h2>Öğün ekle</h2>
+
+  <div class="composer">
+    <div class="composer__photo">
+      <app-photo-upload
+        label="Öğün fotoğrafı"
+        aspect="4 / 3"
+        [url]="null"
+        [removable]="pendingPhoto() !== null"
+        (picked)="onPhotoPicked($event)"
+        (removed)="clearPhoto()"
+      />
+    </div>
+
+    <div class="composer__fields">
+      <div class="grid">
+        <div class="field">
+          <label for="eaten_on">Tarih</label>
+          <input id="eaten_on" type="date" formControlName="eaten_on" required />
+        </div>
+        <div class="field">
+          <label for="meal_type">Öğün</label>
+          <select id="meal_type" formControlName="meal_type">
+            @for (type of mealTypes; track type) {
+              <option [value]="type">{{ mealTypeLabels[type] }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="description">Ne yedin</label>
+        <input id="description" type="text" formControlName="description" placeholder="Izgara tavuk, yeşil salata, yoğurt" />
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="protein_source">Protein kaynağı</label>
+          <input id="protein_source" type="text" formControlName="protein_source" placeholder="Tavuk" />
+        </div>
+        <div class="field">
+          <label for="protein_g">Protein (g)</label>
+          <input id="protein_g" type="number" inputmode="numeric" min="0" max="300" formControlName="protein_g" />
+        </div>
+      </div>
+
+      <div class="checks">
+        <label class="check">
+          <input type="checkbox" formControlName="has_sugar" />
+          <span>Şeker içeriyordu</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" formControlName="has_refined_carbs" />
+          <span>Rafine karbonhidrat içeriyordu</span>
+        </label>
+      </div>
+
+      <button class="btn btn--primary" type="button" [disabled]="saving()" (click)="submit()">
+        {{ saving() ? 'Kaydediliyor…' : 'Öğünü kaydet' }}
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Günlük</h2>
+
+  @if (loading()) {
+    <p class="muted">Yükleniyor…</p>
+  } @else if (groups().length === 0) {
+    <p class="muted">Henüz öğün kaydı yok. İlk öğününü yukarıdan ekle.</p>
+  } @else {
+    @for (group of groups(); track group.date) {
+      <div class="day-group">
+        <div class="day-group__head">
+          <h3 class="mono">{{ group.date }}</h3>
+          <span class="muted">
+            {{ group.meals.length }} öğün
+            @if (group.proteinG > 0) {
+              · {{ group.proteinG }} g protein
+            }
+            @if (group.sugarCount > 0) {
+              · <span class="warn">{{ group.sugarCount }} kaçamak</span>
+            }
+          </span>
+        </div>
+
+        <ul class="meals">
+          @for (meal of group.meals; track meal.id) {
+            <li class="meal">
+              @if (meal.photoUrl) {
+                <img class="meal__photo" [src]="meal.photoUrl" [alt]="mealTypeLabels[meal.meal_type] + ' fotoğrafı'" loading="lazy" />
+              } @else {
+                <span class="meal__photo meal__photo--empty" aria-hidden="true">🍽</span>
+              }
+
+              <div class="meal__body">
+                <p class="meal__title">
+                  {{ mealTypeLabels[meal.meal_type] }}
+                  @if (meal.has_sugar) {
+                    <span class="flag flag--warn">şeker</span>
+                  }
+                  @if (meal.has_refined_carbs) {
+                    <span class="flag flag--warn">rafine karb.</span>
+                  }
+                </p>
+                @if (meal.description) {
+                  <p class="meal__desc muted">{{ meal.description }}</p>
+                }
+                <p class="meal__meta muted">
+                  @if (meal.protein_source) {
+                    {{ meal.protein_source }}
+                  }
+                  @if (meal.protein_g) {
+                    · {{ meal.protein_g }} g protein
+                  }
+                </p>
+              </div>
+
+              <button class="btn btn--ghost btn--sm btn--danger" type="button" (click)="remove(meal)">Sil</button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
+</section>

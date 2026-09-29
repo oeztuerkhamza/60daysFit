@@ -1,9 +1,21 @@
 <header class="page-head">
   <div>
     <h1>60 günlük program</h1>
-    <p class="muted">{{ doneCount() }} / {{ totalDays }} gün tamamlandı</p>
+    <p class="muted">
+      {{ doneCount() }} / {{ totalDays }} gün tamamlandı · toplam {{ plannedKm() }} km planlı
+    </p>
   </div>
 </header>
+
+<section class="card intro">
+  <h2>Nasıl ilerliyor</h2>
+  <ul class="intro__list">
+    <li>Her antrenman gününde yürüyüş <strong>150 metre</strong> uzuyor: 1. gün 3,0 km, 60. gün 10,7 km.</li>
+    <li><strong>1. hafta sadece yürüyüş.</strong> Tempoyu oturtmaya odaklan.</li>
+    <li><strong>2. haftadan itibaren</strong> yürüyüşün öncesine ve sonrasına birer tur squat + şınav eklenir.</li>
+    <li>Her haftanın <strong>7. günü</strong> hafif bir yürüyüş ve kilo + fotoğraf kaydı.</li>
+  </ul>
+</section>
 
 @if (error()) {
   <p class="alert alert--error" role="alert">{{ error() }}</p>
@@ -21,7 +33,7 @@
     <section class="card week-block">
       <div class="week-block__head">
         <h2>{{ block.week }}. hafta</h2>
-        <span class="muted">{{ block.doneCount }} / {{ block.days.length }}</span>
+        <span class="muted">{{ block.totalKm | number: '1.0-1' }} km · {{ block.doneCount }} / {{ block.days.length }}</span>
       </div>
 
       <ol class="days">
@@ -31,13 +43,13 @@
               class="day"
               [class.is-done]="day.done"
               [class.is-today]="day.isToday"
-              [class.is-rest]="day.focus === 'rest'"
+              [class.is-rest]="day.day_type === 'rest'"
               [routerLink]="['/gun', day.day]"
-              [style.--focus]="'var(--focus-' + day.focus + ')'"
+              [style.--day-color]="day.colorVar"
             >
               <span class="day__num">{{ day.day }}</span>
-              <span class="day__title">{{ day.title }}</span>
-              <span class="day__focus muted">{{ focusLabels[day.focus] }} · {{ day.target_minutes }} dk</span>
+              <span class="day__km mono">{{ day.walk_distance_km | number: '1.1-1' }} km</span>
+              <span class="day__type muted">{{ dayTypeLabels[day.day_type] }} · {{ day.target_minutes }} dk</span>
               @if (day.done) {
                 <span class="day__check" aria-label="tamamlandı">✓</span>
               }

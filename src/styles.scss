@@ -15,13 +15,9 @@
   --warn: #ffc857;
   --ok: #4ade80;
 
-  --focus-push: #ff8a5b;
-  --focus-pull: #5bc0ff;
-  --focus-legs: #b78bff;
-  --focus-cardio: #ff5b8a;
-  --focus-core: #ffc857;
-  --focus-full: #4ade80;
-  --focus-rest: #8fa0b5;
+  --day-walk: #5bc0ff;
+  --day-walk-strength: #c2f74a;
+  --day-rest: #8fa0b5;
 
   --radius: 14px;
   --radius-sm: 9px;
@@ -158,6 +154,9 @@ textarea { min-height: 84px; resize: vertical; }
 /* Inside a grid the fields are laid out in columns, so the stacking margin
    would push every field but the first one out of alignment. */
 .grid > .field + .field { margin-top: 0; }
+
+/* A field after a grid row has no `.field` sibling to inherit the gap from. */
+.grid + .field { margin-top: 0.85rem; }
 
 .field__hint { margin: 0.3rem 0 0; font-size: 0.8rem; color: var(--text-muted); }
 

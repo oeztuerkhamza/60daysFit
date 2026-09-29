@@ -3,12 +3,13 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
-import { MeasurementService } from '../../core/data/measurement.service';
+import { CheckpointService } from '../../core/data/checkpoint.service';
+import { MealService } from '../../core/data/meal.service';
 import { ProgramService } from '../../core/data/program.service';
 import { WorkoutService } from '../../core/data/workout.service';
-import { activeDay, buildStats } from '../../core/data/stats';
-import { DailyLog, Measurement, ProgramDay } from '../../core/models';
-import { FocusBadgeComponent } from '../../shared/ui/focus-badge.component';
+import { activeDay, buildStats, pendingCheckpoints, toDateOnly } from '../../core/data/stats';
+import { Checkpoint, DailyLog, Meal, ProgramDay } from '../../core/models';
+import { DayTypeBadgeComponent } from '../../shared/ui/day-type-badge.component';
 import { ProgressRingComponent } from '../../shared/ui/progress-ring.component';
 import { StatCardComponent } from '../../shared/ui/stat-card.component';
 
@@ -17,7 +18,7 @@ const TOTAL_DAYS = environment.challengeLengthDays;
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DecimalPipe, ProgressRingComponent, StatCardComponent, FocusBadgeComponent],
+  imports: [RouterLink, DecimalPipe, ProgressRingComponent, StatCardComponent, DayTypeBadgeComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,13 +27,15 @@ export class DashboardComponent {
   protected readonly auth = inject(AuthService);
   private readonly program = inject(ProgramService);
   private readonly workouts = inject(WorkoutService);
-  private readonly measurements = inject(MeasurementService);
+  private readonly checkpoints = inject(CheckpointService);
+  private readonly meals = inject(MealService);
 
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly days = signal<ProgramDay[]>([]);
   protected readonly logs = signal<DailyLog[]>([]);
-  protected readonly history = signal<Measurement[]>([]);
+  protected readonly history = signal<Checkpoint[]>([]);
+  protected readonly todayMeals = signal<Meal[]>([]);
 
   protected readonly totalDays = TOTAL_DAYS;
   protected readonly stats = computed(() => buildStats(this.logs(), TOTAL_DAYS));
@@ -45,6 +48,11 @@ export class DashboardComponent {
 
   protected readonly todayDone = computed(() => this.completedDays().has(this.currentDay()));
 
+  /** Check-ins the calendar has reached but the user has not recorded. */
+  protected readonly duePhotos = computed(() =>
+    pendingCheckpoints(this.currentDay(), this.history(), TOTAL_DAYS),
+  );
+
   /** The seven days of the week the user is currently in. */
   protected readonly weekStrip = computed(() => {
     const weekIndex = Math.floor((this.currentDay() - 1) / 7);
@@ -54,24 +62,31 @@ export class DashboardComponent {
         ...day,
         done: this.completedDays().has(day.day),
         isToday: day.day === this.currentDay(),
+        colorVar: `var(--day-${day.day_type.replace('_', '-')})`,
       }));
   });
 
   protected readonly currentWeek = computed(() => Math.floor((this.currentDay() - 1) / 7) + 1);
 
-  /** Weight change between the first and most recent measurement, if both exist. */
-  protected readonly weightDelta = computed(() => {
-    const withWeight = this.history().filter((entry) => entry.weight_kg !== null);
-    if (withWeight.length < 2) return null;
-    const first = withWeight[0];
-    const last = withWeight[withWeight.length - 1];
-    return { latest: last.weight_kg as number, change: (last.weight_kg as number) - (first.weight_kg as number) };
-  });
+  private readonly weighIns = computed(() =>
+    this.history().filter((entry): entry is Checkpoint & { weight_kg: number } => entry.weight_kg !== null),
+  );
 
   protected readonly latestWeight = computed(() => {
-    const withWeight = this.history().filter((entry) => entry.weight_kg !== null);
-    return withWeight.length > 0 ? (withWeight[withWeight.length - 1].weight_kg as number) : null;
+    const series = this.weighIns();
+    return series.length > 0 ? series[series.length - 1].weight_kg : null;
   });
+
+  /** Weight change between the first and most recent weigh-in, if both exist. */
+  protected readonly weightChange = computed(() => {
+    const series = this.weighIns();
+    if (series.length < 2) return null;
+    return series[series.length - 1].weight_kg - series[0].weight_kg;
+  });
+
+  protected readonly proteinToday = computed(() =>
+    this.todayMeals().reduce((sum, meal) => sum + (meal.protein_g ?? 0), 0),
+  );
 
   constructor() {
     void this.load();
@@ -80,18 +95,18 @@ export class DashboardComponent {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const [days, logs, history] = await Promise.all([
+      const [days, logs, history, meals] = await Promise.all([
         this.program.days(),
         this.workouts.allLogs(),
-        this.measurements.list(),
+        this.checkpoints.list(),
+        this.meals.forDate(toDateOnly(new Date())),
       ]);
       this.days.set(days);
       this.logs.set(logs);
       this.history.set(history);
+      this.todayMeals.set(meals);
     } catch (err) {
-      this.error.set(
-        err instanceof Error ? err.message : 'Veriler yüklenemedi. Sayfayı yenilemeyi dene.',
-      );
+      this.error.set(err instanceof Error ? err.message : 'Veriler yüklenemedi. Sayfayı yenilemeyi dene.');
     } finally {
       this.loading.set(false);
     }

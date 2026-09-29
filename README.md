@@ -1,29 +1,54 @@
 # 60dayfit
 
-60 günlük antrenman challenge'ını takip etmek için yazılmış bir web uygulaması.
-Program hazır gelir: 7 günlük bir döngü (itme · bacak · kardiyo · çekme · core ·
-full body · dinlenme) 60 güne yayılır, haftalara göre set ve dinlenme süreleri
-artar. Sen sadece günü açıp hareketleri işaretlersin.
+60 günlük, **hızlı yürüyüş temelli** bir dönüşüm programını takip etmek için
+yazılmış web uygulaması. Yürüyüş her seansta biraz daha uzar, ikinci haftadan
+itibaren yürüyüşün öncesine ve sonrasına squat + şınav turları eklenir. Kilo ve
+vücut fotoğrafları başlangıçta, her haftanın sonunda ve bitişte kaydedilir;
+yenen her öğünün fotoğrafı günlüğe düşer.
 
-**Stack:** Angular 19 (standalone + signals) · Supabase (Postgres, Auth, RLS) · Vercel
+**Stack:** Angular 19 (standalone + signals) · Supabase (Postgres, Auth, RLS, Storage) · Vercel
+
+---
+
+## Program
+
+| | |
+| --- | --- |
+| **Süre** | 60 gün · 9 hafta |
+| **Haftalık düzen** | 6 antrenman günü + 7. gün hafif yürüyüş ve kontrol kaydı |
+| **Mesafe** | Her antrenman seansında **+150 m**: 1. gün 3,0 km → 60. gün 10,7 km |
+| **Tempo** | Konuşabildiğin ama şarkı söyleyemediğin hız (yaklaşık 5,5 km/s) |
+| **1. hafta** | Sadece yürüyüş |
+| **2–9. hafta** | Yürüyüşten önce bir tur squat + şınav (ısınma), sonra bir tur daha (bitirici) |
+| **Kuvvet artışı** | Set: 2 (2–4. hafta) → 3 (5–7) → 4 (8–9) · Tekrar her hafta +2 |
+
+2. haftada squat 2×10 / şınav 2×6 ile başlar, 9. haftada squat 4×24 / şınav 4×20
+olur. Dinlenme süreleri 8. haftadan itibaren 15 saniye kısalır.
+
+### Beslenme
+
+Az şeker, az rafine karbonhidrat, bol protein. Kurallar uygulamanın Beslenme
+sayfasında yazılı; kilogram başına 1,6–2 g protein hedefi profilden ayarlanır ve
+her öğün fotoğrafıyla birlikte kaydedilir.
 
 ---
 
 ## Neler var
 
-- **Günlük antrenman ekranı** — o günün hareketleri, set × tekrar, dinlenme süresi
-  ve "nasıl yapılır" açıklamaları. Her hareket için kaldırılan ağırlık ve yapılan
-  tekrar kaydedilir; işaretleme anında kaydolur.
-- **Gün özeti** — süre, su, adım, enerji durumu ve serbest not. Gün tamamlandı
-  olarak işaretlenir (ve gerekirse geri alınır).
-- **60 günlük program görünümü** — haftalara bölünmüş takvim, odak rengi,
-  tamamlanan günler ve bugünün vurgusu.
-- **Panel** — tamamlanma yüzdesi, güncel ve en uzun seri, toplam antrenman süresi,
-  güncel kilo ve başlangıca göre değişim.
-- **Ölçümler** — kilo, yağ oranı ve çevre ölçüleri; kilo eğrisi grafiği ve geçmiş
-  tablosu. Aynı tarih tekrar girilirse üzerine yazılır.
-- **Profil** — başlangıç tarihi (programın 1. günü), boy, hedef ve haftalık
-  antrenman hedefi.
+- **Panel** — bugünkü mesafe ve plan, tamamlanma oranı, güncel/en uzun seri,
+  toplam yürünen kilometre, kilo değişimi, bugünkü öğün sayısı ve bekleyen
+  kontrol kaydı uyarısı.
+- **Program** — 60 günün haftalara bölünmüş görünümü, gün başına mesafe ve süre.
+- **Gün ekranı** — hedef mesafe, yürüyüş öncesi/sonrası kuvvet turları (hareket
+  başına işaretleme ve yapılan tekrar), gerçek mesafe/süre/adım/su girişi, enerji
+  durumu, not ve o güne ait öğünler.
+- **Beslenme** — öğün fotoğrafı yükleme, ne yendiği, protein kaynağı ve gramı,
+  şeker / rafine karbonhidrat işaretleri; günlük protein toplamı ve kaçamak sayısı.
+- **Gelişim** — başlangıç, 8 haftalık ve bitiş kaydı. Her kayıtta kilo ve
+  önden/yandan/arkadan fotoğraf; isteğe bağlı çevre ölçüleri. Kilo eğrisi ve
+  önce/sonra karşılaştırması.
+- **Profil** — başlangıç tarihi (programın 1. günü), boy, hedef, günlük protein
+  ve su hedefi.
 
 Arayüz Türkçe, veri modeli İngilizce isimlendirilmiştir.
 
@@ -34,12 +59,13 @@ Arayüz Türkçe, veri modeli İngilizce isimlendirilmiştir.
 ### 1. Supabase projesi
 
 [supabase.com/dashboard](https://supabase.com/dashboard) üzerinde yeni bir proje aç.
-Ardından **SQL Editor**'de şu dosyaları **sırayla** çalıştır:
+**SQL Editor**'de şu dosyaları **sırayla** çalıştır:
 
 1. `supabase/migrations/0001_init.sql` — tablolar, trigger'lar ve RLS politikaları
-2. `supabase/migrations/0002_seed_program.sql` — hareket kütüphanesi ve 60 günlük program
+2. `supabase/migrations/0002_seed_program.sql` — hareketler ve 60 günlük yürüyüş programı
+3. `supabase/migrations/0003_storage.sql` — fotoğraf depoları (bucket) ve erişim politikaları
 
-Her iki dosya da idempotenttir; tekrar çalıştırmak güvenlidir.
+Üçü de idempotenttir; tekrar çalıştırmak güvenlidir.
 
 > **Authentication → Providers → Email** altında "Confirm email" açıksa kayıt
 > sonrası e-posta onayı istenir. Tek kişilik kullanımda kapatmak işi hızlandırır.
@@ -86,6 +112,23 @@ bu dosya git'e girmez.
 
 ---
 
+## Fotoğraflar
+
+İki özel (private) bucket kullanılır: `progress-photos` ve `meal-photos`.
+Nesne yolunun ilk klasörü kullanıcı kimliğidir ve storage politikaları tam olarak
+bunu kontrol eder, yani kimse başkasının klasörüne yazamaz ve okuyamaz:
+
+```
+progress-photos/<user_id>/<kind>-<week>/<pose>-<timestamp>.jpg
+meal-photos/<user_id>/<eaten_on>/<meal_type>-<timestamp>.jpg
+```
+
+Fotoğraflar yüklenmeden önce tarayıcıda uzun kenarı 1600 px olacak şekilde
+küçültülür ve JPEG'e çevrilir; EXIF yön bilgisi korunur. Görüntüleme kısa ömürlü
+imzalı URL'lerle yapılır.
+
+---
+
 ## Vercel'e deploy
 
 1. Projeyi Vercel'de içe aktar.
@@ -94,7 +137,7 @@ bu dosya git'e girmez.
 3. Build ayarları `vercel.json` içinden gelir:
    - Build command: `npm run build`
    - Output directory: `dist/sixtydayfit/browser`
-   - SPA rewrite'ı tanımlıdır, doğrudan `/gun/15` gibi adresler çalışır.
+   - SPA rewrite tanımlıdır, doğrudan `/gun/15` gibi adresler çalışır.
 
 ---
 
@@ -105,16 +148,15 @@ Ortak tablolar herkes tarafından okunur, kullanıcıya ait tabloları RLS korur
 
 | Tablo | İçerik |
 | --- | --- |
-| `profiles` | Kullanıcı ayarları. Kayıt anında trigger ile otomatik oluşur. |
-| `exercises` | Hareket kütüphanesi (ortak). |
-| `program_days` | 60 günlük şablon: başlık, odak, hedef süre (ortak). |
-| `program_day_exercises` | Güne bağlı hareketler: sıra, set, tekrar, dinlenme (ortak). |
-| `daily_logs` | Kullanıcının gün başına tek check-in kaydı. |
-| `set_logs` | Hareket başına işaretleme, ağırlık ve tekrar. |
-| `measurements` | Tarih başına kilo ve çevre ölçüleri. |
-
-Programın ilerlemesi şablona gömülüdür: 5. haftadan itibaren her harekete bir set
-eklenir, 8. haftadan itibaren dinlenme süreleri 15 saniye kısalır.
+| `profiles` | Kullanıcı ayarları ve hedefleri. Kayıt anında trigger ile oluşur. |
+| `exercises` | Squat ve şınav; talimat, kolay ve zor varyantlarıyla (ortak). |
+| `program_days` | 60 günlük şablon: başlık, gün tipi, mesafe, hedef süre (ortak). |
+| `program_day_exercises` | Güne bağlı kuvvet turları: faz (öncesi/sonrası), set, tekrar (ortak). |
+| `daily_logs` | Gün başına tek check-in: mesafe, süre, adım, su, enerji, not. |
+| `set_logs` | Hareket başına işaretleme ve yapılan tekrar. |
+| `checkpoints` | Başlangıç / haftalık / bitiş kaydı: kilo, boy, çevre ölçüleri. |
+| `checkpoint_photos` | Kayıt başına önden/yandan/arkadan fotoğraf yolu. |
+| `meals` | Öğün: tarih, tür, fotoğraf yolu, protein, şeker ve karbonhidrat işaretleri. |
 
 ---
 
@@ -124,15 +166,16 @@ eklenir, 8. haftadan itibaren dinlenme süreleri 15 saniye kısalır.
 src/app/
 ├── core/
 │   ├── auth/          AuthService, route guard'ları, hata mesajları
-│   ├── data/          Supabase sorguları ve istatistik hesapları
+│   ├── data/          Supabase sorguları, istatistikler, beslenme kuralları
 │   ├── models/        Veritabanı tiplerinin TypeScript karşılıkları
+│   ├── storage/       Fotoğraf yükleme, imzalı URL'ler, görsel küçültme
 │   └── supabase/      Tek Supabase istemcisi
-├── shared/ui/         Progress ring, stat kartı, odak rozeti, kurulum notu
-└── pages/             giris · kayit · panel · program · gun/:id · olcumler · profil
+├── shared/ui/         Progress ring, stat kartı, gün rozeti, fotoğraf yuvası
+└── pages/             giris · kayit · panel · program · gun/:id · beslenme · gelisim · profil
 
 supabase/
-├── migrations/        Şema ve program verisi
-└── test/              CI'ın şemayı sade Postgres'te denemesi için auth stub'ı
+├── migrations/        Şema, program verisi ve storage politikaları
+└── test/              CI'ın şemayı sade Postgres'te denemesi için auth/storage stub'ı
 ```
 
 Rotalar `authGuard` ile korunur; guard, oturum okuması bitene kadar bekler, bu
@@ -146,9 +189,10 @@ yüzden yenilemede kısa bir "giriş ekranı parlaması" olmaz.
 npm run test:ci
 ```
 
-Birim testleri istatistik hesaplarını (seri, tamamlanma yüzdesi, tarih aritmetiği)
-ve oturum hazır-olma akışını kapsar. GitHub Actions ayrıca migration'ları gerçek
-bir Postgres 16 üzerinde iki kez çalıştırıp program verisini doğrular.
+Birim testleri istatistik hesaplarını (seri, tamamlanma yüzdesi, yürünen mesafe
+toplamı, tarih aritmetiği), bekleyen kontrol kayıtlarının hesabını ve oturum
+hazır-olma akışını kapsar. GitHub Actions ayrıca migration'ları gerçek bir
+Postgres 16 üzerinde iki kez çalıştırıp program verisini doğrular.
 
 ---
 

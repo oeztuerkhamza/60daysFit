@@ -1,19 +1,39 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../core/auth/auth.service';
+import { MealService } from '../../core/data/meal.service';
 import { ProgramService } from '../../core/data/program.service';
 import { WorkoutService } from '../../core/data/workout.service';
-import { DailyLog, ProgramDay, ProgramDayExercise, SetLog } from '../../core/models';
-import { FocusBadgeComponent } from '../../shared/ui/focus-badge.component';
+import { parseDateOnly, toDateOnly } from '../../core/data/stats';
+import {
+  DailyLog,
+  Meal,
+  MEAL_TYPE_LABELS,
+  Phase,
+  PHASE_HINTS,
+  PHASE_LABELS,
+  ProgramDay,
+  ProgramDayExercise,
+  SetLog,
+} from '../../core/models';
+import { DayTypeBadgeComponent } from '../../shared/ui/day-type-badge.component';
 
 /** One exercise of the day plus whatever the user has recorded against it. */
 interface ExerciseRow {
   entry: ProgramDayExercise;
   done: boolean;
-  weight: number | null;
   reps: number | null;
+}
+
+interface RoundView {
+  phase: Phase;
+  label: string;
+  hint: string;
+  rows: ExerciseRow[];
 }
 
 const ENERGY_LABELS: Record<number, string> = {
@@ -27,24 +47,28 @@ const ENERGY_LABELS: Record<number, string> = {
 @Component({
   selector: 'app-day-detail',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, FocusBadgeComponent],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, DayTypeBadgeComponent],
   templateUrl: './day-detail.component.html',
   styleUrl: './day-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DayDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
   private readonly program = inject(ProgramService);
   private readonly workouts = inject(WorkoutService);
+  private readonly meals = inject(MealService);
 
   protected readonly totalDays = environment.challengeLengthDays;
   protected readonly energyLabels = ENERGY_LABELS;
   protected readonly energyLevels = [1, 2, 3, 4, 5];
+  protected readonly mealTypeLabels = MEAL_TYPE_LABELS;
 
   protected readonly day = signal(1);
   protected readonly plan = signal<ProgramDay | null>(null);
   protected readonly rows = signal<ExerciseRow[]>([]);
   protected readonly log = signal<DailyLog | null>(null);
+  protected readonly dayMeals = signal<Meal[]>([]);
 
   protected readonly loading = signal(true);
   protected readonly savingCheckIn = signal(false);
@@ -52,9 +76,10 @@ export class DayDetailComponent {
   protected readonly notice = signal('');
 
   protected readonly checkIn = new FormGroup({
-    duration_minutes: new FormControl<number | null>(null),
-    water_ml: new FormControl<number | null>(null),
+    walk_distance_km: new FormControl<number | null>(null),
+    walk_minutes: new FormControl<number | null>(null),
     steps: new FormControl<number | null>(null),
+    water_ml: new FormControl<number | null>(null),
     energy: new FormControl<number | null>(null),
     notes: new FormControl<string>('', { nonNullable: true }),
   });
@@ -63,6 +88,26 @@ export class DayDetailComponent {
   protected readonly doneCount = computed(() => this.rows().filter((row) => row.done).length);
   protected readonly prevDay = computed(() => (this.day() > 1 ? this.day() - 1 : null));
   protected readonly nextDay = computed(() => (this.day() < this.totalDays ? this.day() + 1 : null));
+
+  /** The calendar date this program day falls on, used to pull that day's meals. */
+  protected readonly dayDate = computed(() => {
+    const start = parseDateOnly(this.auth.startDate());
+    start.setDate(start.getDate() + this.day() - 1);
+    return toDateOnly(start);
+  });
+
+  /** The pre-walk and post-walk rounds, empty on walking-only and rest days. */
+  protected readonly rounds = computed<RoundView[]>(() => {
+    const phases: Phase[] = ['pre', 'post'];
+    return phases
+      .map((phase) => ({
+        phase,
+        label: PHASE_LABELS[phase],
+        hint: PHASE_HINTS[phase],
+        rows: this.rows().filter((row) => row.entry.phase === phase),
+      }))
+      .filter((round) => round.rows.length > 0);
+  });
 
   protected readonly dayProgress = computed(() => {
     const total = this.rows().length;
@@ -84,12 +129,6 @@ export class DayDetailComponent {
     await this.persistSetLog(row.entry.id, { done: next });
   }
 
-  protected async onWeightChange(row: ExerciseRow, event: Event): Promise<void> {
-    const weight = this.readNumber(event);
-    this.patchRow(row.entry.id, { weight });
-    await this.persistSetLog(row.entry.id, { weight_kg: weight });
-  }
-
   protected async onRepsChange(row: ExerciseRow, event: Event): Promise<void> {
     const reps = this.readNumber(event);
     this.patchRow(row.entry.id, { reps });
@@ -107,9 +146,11 @@ export class DayDetailComponent {
     try {
       const saved = await this.workouts.saveLog(this.day(), {
         completed,
-        duration_minutes: values.duration_minutes,
-        water_ml: values.water_ml,
+        logged_on: this.dayDate(),
+        walk_distance_km: values.walk_distance_km,
+        walk_minutes: values.walk_minutes,
         steps: values.steps,
+        water_ml: values.water_ml,
         energy: values.energy,
         notes: values.notes.trim() || null,
       });
@@ -145,12 +186,20 @@ export class DayDetailComponent {
       this.rows.set(this.mergeRows(entries, setLogs));
 
       this.checkIn.reset({
-        duration_minutes: log?.duration_minutes ?? plan?.target_minutes ?? null,
-        water_ml: log?.water_ml ?? null,
+        // Pre-fill the target so finishing the planned walk is one tap.
+        walk_distance_km: log?.walk_distance_km ?? plan?.walk_distance_km ?? null,
+        walk_minutes: log?.walk_minutes ?? plan?.target_minutes ?? null,
         steps: log?.steps ?? null,
+        water_ml: log?.water_ml ?? null,
         energy: log?.energy ?? null,
         notes: log?.notes ?? '',
       });
+
+      // The meal list is a nice-to-have; a failure here must not blank the page.
+      this.meals
+        .forDate(this.dayDate())
+        .then((meals) => this.dayMeals.set(meals))
+        .catch(() => this.dayMeals.set([]));
     } catch (err) {
       this.error.set(err instanceof Error ? err.message : 'Gün yüklenemedi.');
     } finally {
@@ -162,20 +211,13 @@ export class DayDetailComponent {
     const byExercise = new Map(setLogs.map((setLog) => [setLog.program_day_exercise_id, setLog]));
     return entries.map((entry) => {
       const setLog = byExercise.get(entry.id);
-      return {
-        entry,
-        done: setLog?.done ?? false,
-        weight: setLog?.weight_kg ?? null,
-        reps: setLog?.reps_done ?? null,
-      };
+      return { entry, done: setLog?.done ?? false, reps: setLog?.reps_done ?? null };
     });
   }
 
   /** Updates one row in place so the UI responds before the network round trip. */
   private patchRow(entryId: string, patch: Partial<Omit<ExerciseRow, 'entry'>>): void {
-    this.rows.update((rows) =>
-      rows.map((row) => (row.entry.id === entryId ? { ...row, ...patch } : row)),
-    );
+    this.rows.update((rows) => rows.map((row) => (row.entry.id === entryId ? { ...row, ...patch } : row)));
   }
 
   private async persistSetLog(

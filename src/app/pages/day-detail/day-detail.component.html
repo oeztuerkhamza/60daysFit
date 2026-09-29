@@ -21,7 +21,7 @@
   <header class="card day-head">
     <div class="day-head__meta">
       <span class="badge">Gün {{ day() }} / {{ totalDays }}</span>
-      <app-focus-badge [focus]="plan()!.focus" />
+      <app-day-type-badge [dayType]="plan()!.day_type" />
       <span class="badge">{{ plan()!.week }}. hafta</span>
       @if (completed()) {
         <span class="badge badge--done">Tamamlandı</span>
@@ -29,26 +29,33 @@
     </div>
 
     <h1>{{ plan()!.title }}</h1>
+
+    <p class="day-head__target mono">
+      {{ plan()!.walk_distance_km | number: '1.1-1' }} km
+      <span class="muted">· yaklaşık {{ plan()!.target_minutes }} dk</span>
+    </p>
+
     @if (plan()!.notes) {
       <p class="muted">{{ plan()!.notes }}</p>
     }
 
-    <div class="day-head__bar" role="img" [attr.aria-label]="'Hareket ilerlemesi ' + dayProgress() + ' yüzde'">
-      <span [style.width.%]="dayProgress()"></span>
-    </div>
-    <p class="muted small">
-      {{ doneCount() }} / {{ rows().length }} hareket · hedef {{ plan()!.target_minutes }} dk
-    </p>
+    @if (rows().length > 0) {
+      <div class="day-head__bar" role="img" [attr.aria-label]="'Hareket ilerlemesi ' + dayProgress() + ' yüzde'">
+        <span [style.width.%]="dayProgress()"></span>
+      </div>
+      <p class="muted small">{{ doneCount() }} / {{ rows().length }} hareket tamamlandı</p>
+    }
   </header>
 
-  <section class="card">
-    <h2>Hareketler</h2>
+  @for (round of rounds(); track round.phase) {
+    <section class="card round">
+      <div class="round__head">
+        <h2>{{ round.label }}</h2>
+        <p class="muted small">{{ round.hint }}</p>
+      </div>
 
-    @if (rows().length === 0) {
-      <p class="muted">Bu gün için hareket tanımlanmamış.</p>
-    } @else {
       <ul class="exercises">
-        @for (row of rows(); track row.entry.id) {
+        @for (row of round.rows; track row.entry.id) {
           <li class="exercise" [class.is-done]="row.done">
             <div class="exercise__main">
               <label class="exercise__check">
@@ -59,55 +66,46 @@
               <div class="exercise__info">
                 <p class="exercise__name">{{ row.entry.exercise.name }}</p>
                 <p class="exercise__spec muted">
-                  {{ row.entry.sets }} set × {{ row.entry.reps }}
+                  {{ row.entry.sets }} set × {{ row.entry.reps }} tekrar
                   @if (row.entry.rest_seconds > 0) {
                     · {{ row.entry.rest_seconds }} sn dinlenme
                   }
-                  · {{ row.entry.exercise.equipment }}
                 </p>
-                @if (row.entry.exercise.instructions) {
-                  <details class="exercise__how">
-                    <summary>Nasıl yapılır</summary>
+                <details class="exercise__how">
+                  <summary>Nasıl yapılır</summary>
+                  @if (row.entry.exercise.instructions) {
                     <p class="muted">{{ row.entry.exercise.instructions }}</p>
-                  </details>
-                }
+                  }
+                  @if (row.entry.exercise.easier_variant) {
+                    <p class="muted"><strong>Zorlanıyorsan:</strong> {{ row.entry.exercise.easier_variant }}</p>
+                  }
+                  @if (row.entry.exercise.harder_variant) {
+                    <p class="muted"><strong>Kolay geliyorsa:</strong> {{ row.entry.exercise.harder_variant }}</p>
+                  }
+                </details>
               </div>
             </div>
 
-            <div class="exercise__inputs">
-              <div class="mini-field">
-                <label [attr.for]="'w-' + row.entry.id">kg</label>
-                <input
-                  [id]="'w-' + row.entry.id"
-                  type="number"
-                  inputmode="decimal"
-                  step="0.5"
-                  min="0"
-                  [value]="row.weight ?? ''"
-                  (change)="onWeightChange(row, $event)"
-                />
-              </div>
-              <div class="mini-field">
-                <label [attr.for]="'r-' + row.entry.id">tekrar</label>
-                <input
-                  [id]="'r-' + row.entry.id"
-                  type="number"
-                  inputmode="numeric"
-                  step="1"
-                  min="0"
-                  [value]="row.reps ?? ''"
-                  (change)="onRepsChange(row, $event)"
-                />
-              </div>
+            <div class="mini-field">
+              <label [attr.for]="'r-' + row.entry.id">yapılan</label>
+              <input
+                [id]="'r-' + row.entry.id"
+                type="number"
+                inputmode="numeric"
+                step="1"
+                min="0"
+                [value]="row.reps ?? ''"
+                (change)="onRepsChange(row, $event)"
+              />
             </div>
           </li>
         }
       </ul>
-    }
-  </section>
+    </section>
+  }
 
   <section class="card" [formGroup]="checkIn">
-    <h2>Gün özeti</h2>
+    <h2>Yürüyüş ve gün özeti</h2>
 
     @if (notice()) {
       <p class="alert alert--ok" role="status">{{ notice() }}</p>
@@ -115,16 +113,21 @@
 
     <div class="grid">
       <div class="field">
-        <label for="duration">Süre (dk)</label>
-        <input id="duration" type="number" inputmode="numeric" min="0" max="600" formControlName="duration_minutes" />
+        <label for="distance">Yürünen mesafe (km)</label>
+        <input id="distance" type="number" inputmode="decimal" step="0.1" min="0" formControlName="walk_distance_km" />
+        <p class="field__hint">Hedef {{ plan()!.walk_distance_km | number: '1.1-1' }} km</p>
       </div>
       <div class="field">
-        <label for="water">Su (ml)</label>
-        <input id="water" type="number" inputmode="numeric" min="0" step="100" formControlName="water_ml" />
+        <label for="minutes">Süre (dk)</label>
+        <input id="minutes" type="number" inputmode="numeric" min="0" max="600" formControlName="walk_minutes" />
       </div>
       <div class="field">
         <label for="steps">Adım</label>
         <input id="steps" type="number" inputmode="numeric" min="0" step="100" formControlName="steps" />
+      </div>
+      <div class="field">
+        <label for="water">Su (ml)</label>
+        <input id="water" type="number" inputmode="numeric" min="0" step="100" formControlName="water_ml" />
       </div>
     </div>
 
@@ -148,7 +151,7 @@
 
     <div class="field">
       <label for="notes">Not</label>
-      <textarea id="notes" formControlName="notes" placeholder="Nasıl gitti? Neyi değiştirmelisin?"></textarea>
+      <textarea id="notes" formControlName="notes" placeholder="Nasıl gitti? Tempo, hava, ağrı…"></textarea>
     </div>
 
     <div class="actions">
@@ -168,5 +171,35 @@
         </button>
       }
     </div>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <h2>Bu günün öğünleri</h2>
+      <a routerLink="/beslenme">Öğün ekle →</a>
+    </div>
+
+    @if (dayMeals().length === 0) {
+      <p class="muted">
+        {{ dayDate() }} için henüz öğün kaydı yok. Yediğin her şeyin fotoğrafını çekip Beslenme sayfasından ekle.
+      </p>
+    } @else {
+      <ul class="meal-chips">
+        @for (meal of dayMeals(); track meal.id) {
+          <li class="meal-chip">
+            <strong>{{ mealTypeLabels[meal.meal_type] }}</strong>
+            @if (meal.description) {
+              <span class="muted">{{ meal.description }}</span>
+            }
+            @if (meal.has_sugar) {
+              <span class="flag flag--warn">şeker</span>
+            }
+            @if (meal.has_refined_carbs) {
+              <span class="flag flag--warn">rafine karb.</span>
+            }
+          </li>
+        }
+      </ul>
+    }
   </section>
 }

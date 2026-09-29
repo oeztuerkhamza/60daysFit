@@ -1,0 +1,118 @@
+.page-head { margin-bottom: 1.25rem; }
+.page-head h1 { margin-bottom: 0.15rem; }
+.page-head p { margin: 0; }
+
+section.card + section.card { margin-top: var(--space); }
+
+/* ---------- rules ---------- */
+.rules h2 { font-size: 1.05rem; }
+
+.rules__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+  margin: 0.6rem 0 0;
+}
+
+.rules__item dt { font-weight: 700; font-size: 0.92rem; }
+.rules__item dd { margin: 0.2rem 0 0; font-size: 0.85rem; line-height: 1.45; }
+
+.rules__target {
+  margin: 1rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+/* ---------- composer ---------- */
+.composer {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 1.1rem;
+  margin-top: 0.75rem;
+}
+
+.composer__fields .btn { margin-top: 1rem; }
+
+.checks { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.85rem; }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+/* ---------- diary ---------- */
+.day-group + .day-group { margin-top: 1.4rem; }
+
+.day-group__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.day-group__head h3 { margin: 0; font-size: 0.95rem; }
+.day-group__head span { font-size: 0.82rem; }
+
+.warn { color: var(--warn); }
+
+.meals { margin: 0; padding: 0; list-style: none; }
+
+.meal {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.meal:last-child { border-bottom: 0; }
+
+.meal__photo {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.meal__photo--empty {
+  display: grid;
+  place-content: center;
+  font-size: 1.4rem;
+  opacity: 0.5;
+}
+
+.meal__body { flex: 1; min-width: 0; }
+.meal__title { margin: 0; font-weight: 650; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.meal__desc { margin: 0.15rem 0 0; font-size: 0.88rem; }
+.meal__meta { margin: 0.1rem 0 0; font-size: 0.8rem; }
+.meal__meta:empty { display: none; }
+
+.flag {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.flag--warn { border: 1px solid var(--warn); color: var(--warn); }
+
+@media (max-width: 620px) {
+  .composer { grid-template-columns: 1fr; }
+  .composer__photo { max-width: 200px; }
+}

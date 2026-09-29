@@ -38,10 +38,26 @@
         }
       </select>
     </div>
+  </div>
+
+  <h3 class="subhead">Beslenme hedefleri</h3>
+
+  <div class="grid">
+    <div class="field">
+      <label for="protein_target_g">Günlük protein (g)</label>
+      <input id="protein_target_g" type="number" inputmode="numeric" min="30" max="400" formControlName="protein_target_g" />
+      <p class="field__hint">Vücut ağırlığının kilosu başına yaklaşık 1,8 g.</p>
+    </div>
 
     <div class="field">
-      <label for="weekly_target">Haftalık antrenman hedefi</label>
-      <input id="weekly_target" type="number" inputmode="numeric" min="1" max="7" formControlName="weekly_target" />
+      <label for="weight_helper">Kilonu gir, hesaplayayım</label>
+      <input id="weight_helper" type="number" inputmode="decimal" step="0.5" placeholder="85" (change)="suggestProtein($event)" />
+      <p class="field__hint">Bu alan kaydedilmez, sadece protein hedefini doldurur.</p>
+    </div>
+
+    <div class="field">
+      <label for="water_target_ml">Günlük su (ml)</label>
+      <input id="water_target_ml" type="number" inputmode="numeric" min="0" max="10000" step="100" formControlName="water_target_ml" />
     </div>
   </div>
 

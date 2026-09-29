@@ -1,0 +1,199 @@
+<header class="page-head">
+  <h1>Gelişim</h1>
+  <p class="muted">
+    Başlangıçta, her haftanın sonunda ve son günde: kilonu gir, önden/yandan/arkadan birer fotoğraf yükle.
+  </p>
+</header>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+@if (notice()) {
+  <p class="alert alert--ok" role="status">{{ notice() }}</p>
+}
+
+@if (summary(); as totals) {
+  <section class="grid summary">
+    <div class="card card--tight">
+      <p class="summary__label">Başlangıç</p>
+      <p class="summary__value mono">{{ totals.first | number: '1.0-1' }} kg</p>
+    </div>
+    <div class="card card--tight">
+      <p class="summary__label">Güncel</p>
+      <p class="summary__value mono">{{ totals.latest | number: '1.0-1' }} kg</p>
+    </div>
+    <div class="card card--tight">
+      <p class="summary__label">Değişim</p>
+      <p class="summary__value mono" [class.is-down]="totals.change < 0" [class.is-up]="totals.change > 0">
+        {{ totals.change > 0 ? '+' : '' }}{{ totals.change | number: '1.0-1' }} kg
+      </p>
+    </div>
+    <div class="card card--tight">
+      <p class="summary__label">Kayıt</p>
+      <p class="summary__value mono">{{ totals.count }}</p>
+    </div>
+  </section>
+}
+
+@if (chartPoints().length > 1) {
+  <section class="card chart-card">
+    <h2>Kilo eğrisi</h2>
+    <svg
+      class="chart"
+      [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+      role="img"
+      aria-label="Kilo değişim grafiği"
+    >
+      <polyline class="chart__line" [attr.points]="chartLine()" />
+      @for (point of chartPoints(); track point.label) {
+        <circle class="chart__dot" [attr.cx]="point.x" [attr.cy]="point.y" r="2.5" />
+      }
+    </svg>
+  </section>
+}
+
+<section class="card">
+  <h2>Kayıtlar</h2>
+
+  @if (loading()) {
+    <p class="muted">Yükleniyor…</p>
+  } @else {
+    <ol class="slots">
+      @for (slot of slots(); track slot.key) {
+        <li>
+          <button
+            class="slot-chip"
+            type="button"
+            [class.is-selected]="slot.key === selected()?.key"
+            [class.is-recorded]="slot.recorded"
+            [class.is-due]="slot.due && !slot.recorded"
+            [attr.aria-pressed]="slot.key === selected()?.key"
+            (click)="select(slot)"
+          >
+            <span class="slot-chip__label">{{ slot.label }}</span>
+            <span class="slot-chip__state">
+              @if (slot.recorded) {
+                ✓ kayıtlı
+              } @else if (slot.due) {
+                bekliyor
+              } @else {
+                {{ slot.dueFromDay }}. gün
+              }
+            </span>
+          </button>
+        </li>
+      }
+    </ol>
+  }
+</section>
+
+@if (selected(); as slot) {
+  <section class="card editor" [formGroup]="form">
+    <div class="section-head">
+      <h2>{{ slot.label }}</h2>
+      @if (!slot.due) {
+        <span class="muted">Bu kayıt {{ slot.dueFromDay }}. günde açılıyor — istersen şimdiden doldurabilirsin.</span>
+      }
+    </div>
+
+    <div class="photos">
+      @for (pose of poses; track pose) {
+        <app-photo-upload
+          [label]="poseLabels[pose]"
+          [url]="selectedPhotos().get(pose)?.url ?? null"
+          [busy]="uploadingPose() === pose"
+          [removable]="selectedPhotos().has(pose)"
+          (picked)="onPhotoPicked(pose, $event)"
+          (removed)="removePhoto(selectedPhotos().get(pose)!.photo)"
+        />
+      }
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="recorded_on">Tarih</label>
+        <input id="recorded_on" type="date" formControlName="recorded_on" required />
+      </div>
+      <div class="field">
+        <label for="weight_kg">Kilo (kg)</label>
+        <input id="weight_kg" type="number" inputmode="decimal" step="0.1" formControlName="weight_kg" />
+      </div>
+      @if (slot.kind === 'start') {
+        <div class="field">
+          <label for="height_cm">Boy (cm)</label>
+          <input id="height_cm" type="number" inputmode="decimal" step="0.5" min="80" max="250" formControlName="height_cm" />
+        </div>
+      }
+    </div>
+
+    <details class="extras">
+      <summary>Çevre ölçüleri (isteğe bağlı)</summary>
+      <div class="grid">
+        <div class="field">
+          <label for="waist_cm">Bel (cm)</label>
+          <input id="waist_cm" type="number" inputmode="decimal" step="0.5" formControlName="waist_cm" />
+        </div>
+        <div class="field">
+          <label for="chest_cm">Göğüs (cm)</label>
+          <input id="chest_cm" type="number" inputmode="decimal" step="0.5" formControlName="chest_cm" />
+        </div>
+        <div class="field">
+          <label for="arm_cm">Kol (cm)</label>
+          <input id="arm_cm" type="number" inputmode="decimal" step="0.5" formControlName="arm_cm" />
+        </div>
+        <div class="field">
+          <label for="thigh_cm">Bacak (cm)</label>
+          <input id="thigh_cm" type="number" inputmode="decimal" step="0.5" formControlName="thigh_cm" />
+        </div>
+      </div>
+    </details>
+
+    <div class="field">
+      <label for="note">Not</label>
+      <input id="note" type="text" formControlName="note" placeholder="Sabah aç karnına ölçüldü" />
+    </div>
+
+    <button class="btn btn--primary" type="button" [disabled]="saving()" (click)="save()">
+      {{ saving() ? 'Kaydediliyor…' : 'Kaydet' }}
+    </button>
+  </section>
+}
+
+@if (comparison(); as pair) {
+  <section class="card">
+    <h2>Önce / sonra</h2>
+    <div class="compare">
+      <div class="compare__col">
+        <p class="compare__label mono">{{ pair.firstLabel }}</p>
+        <div class="compare__row">
+          @for (shot of pair.first; track shot.pose) {
+            <figure class="compare__shot">
+              @if (shot.url) {
+                <img [src]="shot.url" [alt]="poseLabels[shot.pose] + ' başlangıç fotoğrafı'" loading="lazy" />
+              } @else {
+                <span class="compare__empty">—</span>
+              }
+              <figcaption>{{ poseLabels[shot.pose] }}</figcaption>
+            </figure>
+          }
+        </div>
+      </div>
+
+      <div class="compare__col">
+        <p class="compare__label mono">{{ pair.lastLabel }}</p>
+        <div class="compare__row">
+          @for (shot of pair.last; track shot.pose) {
+            <figure class="compare__shot">
+              @if (shot.url) {
+                <img [src]="shot.url" [alt]="poseLabels[shot.pose] + ' güncel fotoğraf'" loading="lazy" />
+              } @else {
+                <span class="compare__empty">—</span>
+              }
+              <figcaption>{{ poseLabels[shot.pose] }}</figcaption>
+            </figure>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+}
