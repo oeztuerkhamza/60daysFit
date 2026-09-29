@@ -13,7 +13,11 @@ function createGate(): { promise: Promise<void>; open: () => void } {
 }
 
 /** Fields a user may edit on their own profile. */
-export type ProfilePatch = Partial<Pick<Profile, 'display_name' | 'start_date' | 'height_cm' | 'goal' | 'weekly_target'>>;
+export type ProfilePatch = Partial<
+  Pick<Profile, 'display_name' | 'start_date' | 'height_cm' | 'goal' | 'protein_target_g' | 'water_target_ml'>
+>;
+
+const PROFILE_COLUMNS = 'id, display_name, start_date, height_cm, goal, protein_target_g, water_target_ml';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -118,7 +122,7 @@ export class AuthService {
 
     const { data, error } = await this.supabase.client
       .from('profiles')
-      .select('id, display_name, start_date, height_cm, goal, weekly_target')
+      .select(PROFILE_COLUMNS)
       .eq('id', userId)
       .maybeSingle<Profile>();
 
@@ -134,7 +138,7 @@ export class AuthService {
       .from('profiles')
       .update(patch)
       .eq('id', userId)
-      .select('id, display_name, start_date, height_cm, goal, weekly_target')
+      .select(PROFILE_COLUMNS)
       .single<Profile>();
 
     if (error) throw error;

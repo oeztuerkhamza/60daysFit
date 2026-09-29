@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { Focus, FOCUS_LABELS } from '../../core/models';
+import { DayType, DAY_TYPE_LABELS } from '../../core/models';
 
-/** Colour-coded label for a program day's focus. */
+/** Colour-coded label for what a program day asks of you. */
 @Component({
-  selector: 'app-focus-badge',
+  selector: 'app-day-type-badge',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<span class="badge" [style.--dot]="color()">{{ text() }}</span>`,
@@ -29,9 +29,9 @@ import { Focus, FOCUS_LABELS } from '../../core/models';
     }
   `,
 })
-export class FocusBadgeComponent {
-  readonly focus = input.required<Focus>();
+export class DayTypeBadgeComponent {
+  readonly dayType = input.required<DayType>();
 
-  protected readonly text = computed(() => FOCUS_LABELS[this.focus()]);
-  protected readonly color = computed(() => `var(--focus-${this.focus()})`);
+  protected readonly text = computed(() => DAY_TYPE_LABELS[this.dayType()]);
+  protected readonly color = computed(() => `var(--day-${this.dayType().replace('_', '-')})`);
 }

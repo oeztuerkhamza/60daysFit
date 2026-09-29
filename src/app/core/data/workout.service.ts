@@ -4,14 +4,17 @@ import { AuthService } from '../auth/auth.service';
 import { DailyLog, SetLog } from '../models';
 
 const LOG_COLUMNS =
-  'id, user_id, day, logged_on, completed, duration_minutes, water_ml, steps, energy, notes';
-const SET_LOG_COLUMNS = 'id, user_id, day, program_day_exercise_id, done, weight_kg, reps_done';
+  'id, user_id, day, logged_on, completed, walk_distance_km, walk_minutes, steps, water_ml, energy, notes';
+const SET_LOG_COLUMNS = 'id, user_id, day, program_day_exercise_id, done, reps_done';
 
 export type DailyLogPatch = Partial<
-  Pick<DailyLog, 'completed' | 'duration_minutes' | 'water_ml' | 'steps' | 'energy' | 'notes' | 'logged_on'>
+  Pick<
+    DailyLog,
+    'completed' | 'walk_distance_km' | 'walk_minutes' | 'steps' | 'water_ml' | 'energy' | 'notes' | 'logged_on'
+  >
 >;
 
-export type SetLogPatch = Partial<Pick<SetLog, 'done' | 'weight_kg' | 'reps_done'>>;
+export type SetLogPatch = Partial<Pick<SetLog, 'done' | 'reps_done'>>;
 
 /** Reads and writes the signed-in user's check-ins and per-exercise records. */
 @Injectable({ providedIn: 'root' })

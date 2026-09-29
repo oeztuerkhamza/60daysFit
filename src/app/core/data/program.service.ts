@@ -2,10 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ProgramDay, ProgramDayExercise } from '../models';
 
-const DAY_COLUMNS = 'day, week, title, focus, target_minutes, notes';
+const DAY_COLUMNS = 'day, week, title, day_type, walk_distance_km, target_minutes, notes';
 const DAY_EXERCISE_COLUMNS =
-  'id, day, order_index, sets, reps, rest_seconds, ' +
-  'exercise:exercises(id, slug, name, muscle_group, equipment, instructions)';
+  'id, day, phase, order_index, sets, reps, rest_seconds, ' +
+  'exercise:exercises(id, slug, name, muscle_group, instructions, easier_variant, harder_variant)';
 
 /**
  * Reads the shared 60-day template. The template never changes at runtime, so
@@ -26,11 +26,13 @@ export class ProgramService {
     return days.find((candidate) => candidate.day === day) ?? null;
   }
 
+  /** Ordered so the pre-walk round comes before the post-walk round. */
   async exercisesForDay(day: number): Promise<ProgramDayExercise[]> {
     const { data, error } = await this.supabase.client
       .from('program_day_exercises')
       .select(DAY_EXERCISE_COLUMNS)
       .eq('day', day)
+      .order('phase', { ascending: true })
       .order('order_index', { ascending: true })
       .returns<ProgramDayExercise[]>();
 

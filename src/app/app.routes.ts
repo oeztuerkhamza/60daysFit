@@ -33,10 +33,16 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/day-detail/day-detail.component').then((m) => m.DayDetailComponent),
   },
   {
-    path: 'olcumler',
-    title: 'Ölçümler · 60dayfit',
+    path: 'beslenme',
+    title: 'Beslenme · 60dayfit',
     canActivate: [authGuard],
-    loadComponent: () => import('./pages/measurements/measurements.component').then((m) => m.MeasurementsComponent),
+    loadComponent: () => import('./pages/meals/meals.component').then((m) => m.MealsComponent),
+  },
+  {
+    path: 'gelisim',
+    title: 'Gelişim · 60dayfit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/progress/progress.component').then((m) => m.ProgressComponent),
   },
   {
     path: 'profil',

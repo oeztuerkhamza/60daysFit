@@ -21,7 +21,8 @@
         <nav id="main-nav" class="nav" [class.nav--open]="menuOpen()">
           <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Panel</a>
           <a routerLink="/program" routerLinkActive="is-active" (click)="closeMenu()">Program</a>
-          <a routerLink="/olcumler" routerLinkActive="is-active" (click)="closeMenu()">Ölçümler</a>
+          <a routerLink="/beslenme" routerLinkActive="is-active" (click)="closeMenu()">Beslenme</a>
+          <a routerLink="/gelisim" routerLinkActive="is-active" (click)="closeMenu()">Gelişim</a>
           <a routerLink="/profil" routerLinkActive="is-active" (click)="closeMenu()">Profil</a>
           <button class="btn btn--ghost btn--sm" type="button" (click)="signOut()">Çıkış</button>
         </nav>

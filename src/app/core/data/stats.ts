@@ -1,4 +1,4 @@
-import { DailyLog } from '../models';
+import { Checkpoint, CheckpointKind, DailyLog } from '../models';
 
 export interface ChallengeStats {
   /** Program days marked completed. */
@@ -13,16 +13,18 @@ export interface ChallengeStats {
   currentStreak: number;
   /** Longest run of consecutive completed days anywhere in the program. */
   longestStreak: number;
-  /** Sum of logged workout minutes. */
-  totalMinutes: number;
+  /** Kilometres actually walked, summed across every log. */
+  totalWalkKm: number;
+  /** Minutes actually walked, summed across every log. */
+  totalWalkMinutes: number;
 }
 
 /**
  * Derives challenge totals from a user's daily logs.
  *
  * Streaks are counted over program day numbers, not calendar dates: the program
- * is a sequence of 60 workouts, and skipping a day leaves a hole in that
- * sequence whether or not the user trained on consecutive dates.
+ * is a sequence of 60 sessions, and skipping one leaves a hole in that sequence
+ * whether or not the user walked on consecutive dates.
  */
 export function buildStats(logs: readonly DailyLog[], totalDays: number): ChallengeStats {
   const completedDayNumbers = logs
@@ -40,7 +42,8 @@ export function buildStats(logs: readonly DailyLog[], totalDays: number): Challe
     previousDay = day;
   }
 
-  const totalMinutes = logs.reduce((sum, log) => sum + (log.duration_minutes ?? 0), 0);
+  const totalWalkKm = logs.reduce((sum, log) => sum + (log.walk_distance_km ?? 0), 0);
+  const totalWalkMinutes = logs.reduce((sum, log) => sum + (log.walk_minutes ?? 0), 0);
   const completedDays = completedDayNumbers.length;
 
   return {
@@ -50,8 +53,52 @@ export function buildStats(logs: readonly DailyLog[], totalDays: number): Challe
     // currentRun holds the trailing run once the loop finishes.
     currentStreak: currentRun,
     longestStreak,
-    totalMinutes,
+    // Floating point sums of one-decimal values drift; pin it back to one decimal.
+    totalWalkKm: Math.round(totalWalkKm * 10) / 10,
+    totalWalkMinutes,
   };
+}
+
+export interface CheckpointSlot {
+  kind: CheckpointKind;
+  /** 1–8 for weekly check-ins, 0 for the start and end records. */
+  week: number;
+  label: string;
+  /** The program day from which this check-in can be recorded. */
+  dueFromDay: number;
+}
+
+/** Every check-in the program asks for, in the order they come round. */
+export function checkpointSlots(totalDays: number): CheckpointSlot[] {
+  const weeklyCount = Math.floor((totalDays - 1) / 7);
+  const weekly: CheckpointSlot[] = Array.from({ length: weeklyCount }, (_, index) => ({
+    kind: 'week' as const,
+    week: index + 1,
+    label: `${index + 1}. hafta`,
+    dueFromDay: (index + 1) * 7,
+  }));
+
+  return [
+    { kind: 'start', week: 0, label: 'Başlangıç', dueFromDay: 1 },
+    ...weekly,
+    { kind: 'end', week: 0, label: 'Bitiş', dueFromDay: totalDays },
+  ];
+}
+
+function slotKey(kind: CheckpointKind, week: number): string {
+  return `${kind}:${kind === 'week' ? week : 0}`;
+}
+
+/** Slots the calendar has reached but the user has not recorded yet. */
+export function pendingCheckpoints(
+  currentDay: number,
+  recorded: readonly Checkpoint[],
+  totalDays: number,
+): CheckpointSlot[] {
+  const done = new Set(recorded.map((entry) => slotKey(entry.kind, entry.week)));
+  return checkpointSlots(totalDays).filter(
+    (slot) => currentDay >= slot.dueFromDay && !done.has(slotKey(slot.kind, slot.week)),
+  );
 }
 
 /** Parses a `YYYY-MM-DD` column into a local-midnight Date. */
