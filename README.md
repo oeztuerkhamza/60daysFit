@@ -64,8 +64,9 @@ Arayüz Türkçe, veri modeli İngilizce isimlendirilmiştir.
 1. `supabase/migrations/0001_init.sql` — tablolar, trigger'lar ve RLS politikaları
 2. `supabase/migrations/0002_seed_program.sql` — hareketler ve 60 günlük yürüyüş programı
 3. `supabase/migrations/0003_storage.sql` — fotoğraf depoları (bucket) ve erişim politikaları
+4. `supabase/migrations/0004_harden_functions.sql` — yardımcı fonksiyonların kilitlenmesi
 
-Üçü de idempotenttir; tekrar çalıştırmak güvenlidir.
+Hepsi idempotenttir; tekrar çalıştırmak güvenlidir.
 
 > **Authentication → Providers → Email** altında "Confirm email" açıksa kayıt
 > sonrası e-posta onayı istenir. Tek kişilik kullanımda kapatmak işi hızlandırır.

@@ -17,7 +17,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
           üzerinde yeni bir proje oluştur.
         </li>
         <li>
-          <code>supabase/migrations</code> altındaki üç SQL dosyasını sırayla SQL Editor'de çalıştır
+          <code>supabase/migrations</code> altındaki SQL dosyalarını sırayla SQL Editor'de çalıştır
           (şema, program ve fotoğraf depoları).
         </li>
         <li>
